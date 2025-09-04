@@ -263,8 +263,8 @@
                     const file = new File([blob], 'reservation_card.png', { type: 'image/png' });
                     await navigator.share({
                         files: [file],
-                        title: '스터디룸 예약 확인서',
-                        text: '이룸 스터디룸 예약 정보입니다.'
+                        title: '스터디룸 예약',
+                        text: '스터디룸 예약 했습니다..'
                     });
                     showModal('이미지가 성공적으로 공유되었습니다.');
                 } else {
