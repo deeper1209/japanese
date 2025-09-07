@@ -301,8 +301,8 @@
                     Kakao.Share.sendDefault({
                         objectType: 'feed',
                         content: {
-                            title: '스터디룸 예약 정보',
-                            description: `[스터디룸 예약]
+                            title: '스터디룸 예약 했습니다.',
+                            description: `[위치 확인하기]
 ${el('branch').textContent}
 ${el('address').textContent}
 ${el('date').textContent}
@@ -315,7 +315,7 @@ ${el('time').textContent}`,
                         },
                         buttons: [
                             {
-                                title: '예약 확인하기',
+                                title: '위치 정보',
                                 link: {
                                     mobileWebUrl: shareUrl,
                                     webUrl: shareUrl,
