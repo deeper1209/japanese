@@ -268,22 +268,58 @@
         // 메인 액션 버튼 (공유 또는 다운로드)
         el('mainAction').addEventListener('click', async () => {
             const node = el('card');
+            el('mainAction').textContent = '이미지 준비 중...';
+            el('mainAction').disabled = true;
+
             try {
+                // 예약 확인서 이미지 생성
                 const canvas = await html2canvas(node, { 
                     scale: window.devicePixelRatio || 2, 
                     backgroundColor: '#0f1724', // 배경색을 명확하게 지정
-                    // 외부 이미지를 처리하기 위한 옵션
                     useCORS: true
                 });
+                const reservationCardBlob = await canvasToBlob(canvas);
+                const reservationCardFile = new File([reservationCardBlob], 'reservation_card.png', { type: 'image/png' });
+
+                // 네이버 지도 Static Map API를 사용하여 지도 이미지 가져오기
+                const address = '영등포구 여의대방로65길 10, 유니온타워';
+                const geocodeUrl = `https://naveropenapi.apigw.ntruss.com/map-geocode/v2/geocode?query=${encodeURIComponent(address)}`;
+                
+                const geocodeResponse = await fetch(geocodeUrl, {
+                    headers: {
+                        'X-NCP-APIGW-API-KEY-ID': '',
+                        'X-NCP-APIGW-API-KEY': ''
+                    }
+                });
+                
+                const geocodeData = await geocodeResponse.json();
+                
+                let lat = 37.5255479; // 기본값 (유니온타워)
+                let lng = 126.9255747; // 기본값
+                
+                if (geocodeData.addresses && geocodeData.addresses.length > 0) {
+                    lat = geocodeData.addresses[0].y;
+                    lng = geocodeData.addresses[0].x;
+                }
+
+                const mapUrl = `https://naveropenapi.apigw.ntruss.com/map-static/v2/raster?w=640&h=480&center=${lng},${lat}&level=15&markers=type:d|size:mid|pos:${lng},${lat}`;
+                
+                const mapImageResponse = await fetch(mapUrl, {
+                     headers: {
+                        'X-NCP-APIGW-API-KEY-ID': '',
+                        'X-NCP-APIGW-API-KEY': ''
+                    }
+                });
+                const mapImageBlob = await mapImageResponse.blob();
+                const mapImageFile = new File([mapImageBlob], 'studyroom_map.png', { type: 'image/png' });
                 
                 // Web Share API를 지원하는지 확인
-                if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([await canvasToBlob(canvas)], 'reservation_card.png', { type: 'image/png' })] })) {
-                    const blob = await canvasToBlob(canvas);
-                    const file = new File([blob], 'reservation_card.png', { type: 'image/png' });
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [reservationCardFile, mapImageFile] })) {
                     await navigator.share({
-                        files: [file],
+                        files: [reservationCardFile, mapImageFile],
                         title: '스터디룸 예약',
-                        text: '스터디룸 예약 했습니다.\n위치 확인하기: https://i.imgur.com/5G51JLt.png'
+                        // 사용자의 요청에 따라 공유 텍스트를 수정합니다.
+                        text: '스터디룸 예약 했습니다.'
                     });
                     showModal('이미지가 성공적으로 공유되었습니다.');
                 } else {
@@ -293,6 +329,9 @@
                 }
             } catch(err) {
                 showModal('작업에 실패했습니다: ' + (err && err.message ? err.message : err));
+            } finally {
+                el('mainAction').textContent = '이미지 공유하기';
+                el('mainAction').disabled = false;
             }
         });
 
