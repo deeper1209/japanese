@@ -1,4 +1,4 @@
-<!doctype html>
+대답만해, 작업은 내 지시를 기다려.<!doctype html>
 <html lang="ko">
 <head>
     <meta charset="utf-8" />
@@ -252,24 +252,6 @@
             canvas.toBlob(resolve, 'image/png');
           });
         }
-
-        // 이미지를 다운로드하는 헬퍼 함수
-        async function downloadImage(canvas) {
-            try {
-                const blob = await canvasToBlob(canvas);
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'reservation_card.png';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                showModal('이미지 다운로드가 완료되었습니다. 다운로드 폴더를 확인해 주세요.', '다운로드 완료');
-            } catch (error) {
-                showModal('이미지 다운로드에 실패했습니다: ' + error.message, '오류');
-            }
-        }
         
         // 메인 액션 버튼 (공유)
         el('mainAction').addEventListener('click', async () => {
@@ -301,8 +283,7 @@
                         showModal('URL이 성공적으로 공유되었습니다.');
                     } catch (err) {
                         if (err.name !== 'AbortError') {
-                            showModal('공유에 실패하여 이미지를 다운로드합니다.');
-                            downloadImage(canvas);
+                            showModal('공유에 실패했습니다.');
                         }
                     }
                 } else {
@@ -319,8 +300,7 @@
                         showModal('이미지가 성공적으로 공유되었습니다.');
                     } catch (err) {
                         if (err.name !== 'AbortError') {
-                            showModal('공유에 실패하여 이미지를 다운로드합니다.');
-                            downloadImage(canvas);
+                            showModal('공유에 실패했습니다.');
                         }
                     }
                 }
