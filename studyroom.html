@@ -172,7 +172,7 @@
         </div>
         <!-- 버튼을 카드 바깥으로 이동 -->
         <div class="controls" role="group" aria-label="actions">
-            <button id="mainAction" class="primary">이미지 공유</button>
+            <button id="mainAction" class="primary">이미지 공유하기</button>
             <button id="resetBtn">초기화</button>
         </div>
     </div>
@@ -268,35 +268,31 @@
         // 메인 액션 버튼 (공유 또는 다운로드)
         el('mainAction').addEventListener('click', async () => {
             const node = el('card');
-            el('mainAction').textContent = '이미지 준비 중...';
-            el('mainAction').disabled = true;
             try {
                 const canvas = await html2canvas(node, { 
                     scale: window.devicePixelRatio || 2, 
-                    backgroundColor: '#0f1724',
+                    backgroundColor: '#0f1724', // 배경색을 명확하게 지정
+                    // 외부 이미지를 처리하기 위한 옵션
                     useCORS: true
                 });
                 
-                const blob = await canvasToBlob(canvas);
-                const file = new File([blob], 'reservation_card.png', { type: 'image/png' });
-                
                 // Web Share API를 지원하는지 확인
-                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([await canvasToBlob(canvas)], 'reservation_card.png', { type: 'image/png' })] })) {
+                    const blob = await canvasToBlob(canvas);
+                    const file = new File([blob], 'reservation_card.png', { type: 'image/png' });
                     await navigator.share({
                         files: [file],
-                        title: '스터디룸 예약'
+                        title: '스터디룸 예약',
+                        text: '스터디룸 예약 했습니다.\n위치 확인하기:https://deeper1209.github.io/studyroom/map.html>'
                     });
                     showModal('이미지가 성공적으로 공유되었습니다.');
                 } else {
-                    // Web Share API가 지원되지 않을 경우 다운로드 실행
+                    // Web Share API가 지원되지 않을 경우 다운로드 실행 및 안내
                     downloadImage(canvas);
-                    showModal('공유 기능이 지원되지 않아 이미지가 다운로드됩니다.', '알림');
+                    showModal('이미지 공유에 실패했습니다. 다운로드 버튼을 눌러 이미지를 저장해 보세요.', '알림');
                 }
             } catch(err) {
                 showModal('작업에 실패했습니다: ' + (err && err.message ? err.message : err));
-            } finally {
-                el('mainAction').textContent = '이미지 공유';
-                el('mainAction').disabled = false;
             }
         });
 
