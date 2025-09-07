@@ -252,54 +252,80 @@
             canvas.toBlob(resolve, 'image/png');
           });
         }
+
+        // 이미지를 다운로드하는 헬퍼 함수
+        async function downloadImage(canvas) {
+            try {
+                const blob = await canvasToBlob(canvas);
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'reservation_card.png';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showModal('이미지 다운로드가 완료되었습니다. 다운로드 폴더를 확인해 주세요.', '다운로드 완료');
+            } catch (error) {
+                showModal('이미지 다운로드에 실패했습니다: ' + error.message, '오류');
+            }
+        }
         
         // 메인 액션 버튼 (공유)
         el('mainAction').addEventListener('click', async () => {
-            const node = el('card');
             el('mainAction').textContent = '이미지 준비 중...';
             el('mainAction').disabled = true;
 
+            const node = el('card');
             const isAndroid = /Android/i.test(navigator.userAgent);
-            const shareUrl = 'https://deeper1209.github.io/studyroom/map.html';
+            const shareUrl = 'https://deeper1209.github.io/japanese/studtroom.html';
             const shareTitle = '스터디룸 예약';
             const shareText = '스터디룸 예약 확인하고 위치 확인하기.';
 
             try {
-                if (isAndroid) {
-                    // 안드로이드 기기인 경우 URL만 공유
-                    await navigator.share({
-                        title: shareTitle,
-                        text: shareText,
-                        url: shareUrl
-                    });
-                    showModal('URL이 성공적으로 공유되었습니다.');
-                } else {
-                    // iOS를 포함한 기타 기기인 경우 이미지 파일 공유
-                    const canvas = await html2canvas(node, { 
-                        scale: window.devicePixelRatio || 2, 
-                        backgroundColor: '#0f1724',
-                        useCORS: true
-                    });
-                    const blob = await canvasToBlob(canvas);
-                    const file = new File([blob], 'reservation_card.png', { type: 'image/png' });
+                // 항상 캔버스를 먼저 생성
+                const canvas = await html2canvas(node, { 
+                    scale: window.devicePixelRatio || 2, 
+                    backgroundColor: '#0f1724',
+                    useCORS: true
+                });
 
-                    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                if (isAndroid) {
+                    // 안드로이드 기기인 경우 URL만 공유 시도
+                    try {
+                        await navigator.share({
+                            title: shareTitle,
+                            text: shareText,
+                            url: shareUrl
+                        });
+                        showModal('URL이 성공적으로 공유되었습니다.');
+                    } catch (err) {
+                        if (err.name !== 'AbortError') {
+                            showModal('공유에 실패하여 이미지를 다운로드합니다.');
+                            downloadImage(canvas);
+                        }
+                    }
+                } else {
+                    // iOS를 포함한 기타 기기인 경우 이미지 파일 공유 시도
+                    try {
+                        const blob = await canvasToBlob(canvas);
+                        const file = new File([blob], 'reservation_card.png', { type: 'image/png' });
+                        
                         await navigator.share({
                             files: [file],
                             title: shareTitle,
                             text: shareText
                         });
                         showModal('이미지가 성공적으로 공유되었습니다.');
-                    } else {
-                        showModal('공유 기능이 지원되지 않습니다.');
+                    } catch (err) {
+                        if (err.name !== 'AbortError') {
+                            showModal('공유에 실패하여 이미지를 다운로드합니다.');
+                            downloadImage(canvas);
+                        }
                     }
                 }
             } catch(err) {
-                // 사용자가 공유를 취소한 경우에도 에러가 발생할 수 있습니다.
-                // 에러 메시지가 'AbortError'인 경우 모달을 띄우지 않습니다.
-                if (err.name !== 'AbortError') {
-                    showModal('작업에 실패했습니다: ' + (err && err.message ? err.message : err));
-                }
+                showModal('이미지 생성에 실패했습니다: ' + (err && err.message ? err.message : err));
             } finally {
                 el('mainAction').textContent = '이미지 공유';
                 el('mainAction').disabled = false;
