@@ -121,10 +121,29 @@
             margin-bottom: 12px;
             text-align: center;
         }
+        #kakao-warning {
+            display: none; /* 초기에는 숨김 */
+            margin-bottom: 20px;
+            padding: 12px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--card);
+            text-align: center;
+        }
+        #kakao-warning button {
+            margin-top: 10px;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
     <div class="wrap">
+        <div id="kakao-warning">
+            <p>공유 기능이 작동하지 않나요? 아래 버튼을 눌러 외부 브라우저에서 다시 열어주세요.</p>
+            <button id="open-in-browser-btn" class="primary">외부 브라우저에서 열기</button>
+        </div>
         <div class="info-bar">
             터치하여 수정하고 편집 후 이미지로 공유하세요.
         </div>
@@ -190,7 +209,7 @@
     </div>
 
     <!-- html2canvas CDN for image export -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" xintegrity="sha512-BNa5xNwqjQqjQq9gQjzG5aI2qfQv1Zs9+fGf6lK8a2e8u7Y6qg4x8v2g0kGm9E6v5ZzT3z9y6Qh2g7a1ZcYw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" xintegrity="sha512-BNa5xNwqjQqjQq9gQjzG5aI2qfQv1Zs9+fGf6lK8a2e8u7Y6qg4x8v2g0kGm9E6v5ZzT3z9y6Qh2g7a1ZcYw=" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
     <script>
         // 초기값
@@ -312,6 +331,19 @@
                 }, 600);
             });
         });
+
+        // 카카오톡 인앱 브라우저 감지 및 처리
+        function isKakaoTalkInAppBrowser() {
+            const userAgent = navigator.userAgent.toLowerCase();
+            return userAgent.includes('kakaotalk');
+        }
+
+        if (isKakaoTalkInAppBrowser()) {
+            el('kakao-warning').style.display = 'block';
+            el('open-in-browser-btn').addEventListener('click', () => {
+                window.location.href = window.location.href; // 현재 URL을 다시 열어 외부 브라우저 유도
+            });
+        }
     </script>
 </body>
 </html>
