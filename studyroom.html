@@ -121,30 +121,10 @@
             margin-bottom: 12px;
             text-align: center;
         }
-        #share-warning {
-            display: none; /* 초기에는 숨김 */
-            margin-bottom: 20px;
-            padding: 12px;
-            background-color: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            font-size: 14px;
-            color: var(--card);
-            text-align: center;
-        }
-        #share-warning button {
-            margin-top: 10px;
-            width: 100%;
-        }
     </style>
 </head>
 <body>
     <div class="wrap">
-        <div id="share-warning">
-            <p>공유 기능이 작동하지 않나요? 아래 버튼을 눌러 이미지를 저장하거나 외부 브라우저에서 다시 시도하세요.</p>
-            <button id="download-btn">다운로드하기</button>
-            <button id="open-in-browser-btn" class="primary">외부 브라우저에서 열기</button>
-        </div>
         <div class="info-bar">
             터치하여 수정하고 편집 후 이미지로 공유하세요.
         </div>
@@ -210,7 +190,7 @@
     </div>
 
     <!-- html2canvas CDN for image export -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" xintegrity="sha512-BNa5xNwqjQqjQq9gQjzG5aI2qfQv1Zs9+fGf6lK8a2e8u7Y6qg4x8v2g0kGm9E6v5ZzT3z9y6Qh2g7a1ZcYw=" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" xintegrity="sha512-BNa5xNwqjQqjQq9gQjzG5aI2qfQv1Zs9+fGf6lK8a2e8u7Y6qg4x8v2g0kGm9E6v5ZzT3z9y6Qh2g7a1ZcYw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
     <script>
         // 초기값
@@ -296,29 +276,20 @@
                     useCORS: true
                 });
                 
-                const blob = await canvasToBlob(canvas);
-                const file = new File([blob], 'reservation_card.png', { type: 'image/png' });
-
-                // Web Share API를 지원하고 파일 공유가 가능한지 확인
-                const canShareImage = navigator.share && navigator.canShare && navigator.canShare({ files: [file] });
-
-                if (canShareImage) {
-                    try {
-                        await navigator.share({
-                            files: [file],
-                            title: '스터디룸 예약',
-                            text: '스터디룸 예약 했습니다.\n위치 확인하기: https://deeper1209.github.io/studyroom/map.html'
-                        });
-                        showModal('성공적으로 공유되었습니다.');
-                    } catch(err) {
-                        // 공유가 취소되거나 실패했을 경우
-                        console.error('Share failed:', err);
-                        el('share-warning').style.display = 'block';
-                    }
+                // Web Share API를 지원하는지 확인
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([await canvasToBlob(canvas)], 'reservation_card.png', { type: 'image/png' })] })) {
+                    const blob = await canvasToBlob(canvas);
+                    const file = new File([blob], 'reservation_card.png', { type: 'image/png' });
+                    await navigator.share({
+                        files: [file],
+                        title: '스터디룸 예약',
+                        text: '스터디룸 예약 했습니다.\n위치 확인하기: https://deeper1209.github.io/studyroom/map.html'
+                    });
+                    showModal('성공적으로 공유되었습니다.');
                 } else {
-                    // Web Share API가 지원되지 않는 경우
-                    el('share-warning').style.display = 'block';
+                    // Web Share API가 지원되지 않을 경우 다운로드 실행 및 안내
                     downloadImage(canvas);
+                    showModal('공유에 실패했습니다. 다운로드 버튼을 눌러 저장해 보세요.', '알림');
                 }
             } catch(err) {
                 showModal('작업에 실패했습니다: ' + (err && err.message ? err.message : err));
@@ -340,28 +311,6 @@
                     // 현재는 별도 표시 없음
                 }, 600);
             });
-        });
-
-        // 공유 실패 시 다운로드 버튼 및 외부 브라우저 버튼 이벤트
-        el('download-btn').addEventListener('click', () => {
-            const node = el('card');
-            html2canvas(node, { scale: window.devicePixelRatio || 2, backgroundColor: '#0f1724', useCORS: true }).then(canvas => {
-                downloadImage(canvas);
-            });
-        });
-
-        el('open-in-browser-btn').addEventListener('click', () => {
-            const currentUrl = window.location.href;
-            window.open(currentUrl, '_blank');
-        });
-
-        // 초기 로드 시 공유 가능 여부 확인
-        window.addEventListener('load', () => {
-             const canShare = navigator.share && navigator.canShare;
-             if (!canShare) {
-                 // 공유 기능이 아예 없는 브라우저라면 경고 메시지를 바로 표시
-                 el('share-warning').style.display = 'block';
-             }
         });
     </script>
 </body>
