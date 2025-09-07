@@ -341,7 +341,9 @@
         if (isKakaoTalkInAppBrowser()) {
             el('kakao-warning').style.display = 'block';
             el('open-in-browser-btn').addEventListener('click', () => {
-                window.location.href = window.location.href; // 현재 URL을 다시 열어 외부 브라우저 유도
+                // window.open()을 사용하여 새로운 창/탭에서 URL을 열도록 시도
+                const currentUrl = window.location.href;
+                window.open(currentUrl, '_blank');
             });
         }
     </script>
