@@ -189,9 +189,6 @@
         </div>
     </div>
 
-    <!-- html2canvas CDN for image export -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" xintegrity="sha512-BNa5xNwqjQqjQq9gQjzG5aI2qfQv1Zs9+fGf6lK8a2e8u7Y6qg4x8v2g0kGm9E6v5ZzT3z9y6Qh2g7a1ZcYw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
     <!-- 카카오 SDK CDN -->
     <script src="https://developers.kakao.com/sdk/js/kakao.js"></script>
 
@@ -266,148 +263,54 @@
             console.error("카카오 SDK 초기화 실패:", e);
         }
         
-        // 캔버스를 Blob으로 변환하는 헬퍼 함수
-        function canvasToBlob(canvas) {
-          return new Promise(resolve => {
-            canvas.toBlob(resolve, 'image/png');
-          });
-        }
-        
-        // 이미지 다운로드 함수
-        function downloadImage(canvas) {
-            const dataUrl = canvas.toDataURL('image/png');
-            const link = document.createElement('a');
-            link.href = dataUrl;
-            link.download = 'reservation_card.png';
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            showModal('성공적으로 저장되었습니다.');
-        }
-
-        // 카카오톡 공유 함수
-        function shareToKakao(title, description, linkUrl, imageUrl) {
+        // 카카오톡 공유 함수 (카드 정보와 지도 링크를 함께 보냄)
+        function shareToKakao() {
             if (!Kakao.isInitialized()) {
                 showModal('카카오톡 SDK가 초기화되지 않았습니다. API 키를 확인해 주세요.', '오류');
                 return;
             }
 
-            Kakao.Share.sendDefault({
-                objectType: 'feed',
-                content: {
-                    title: title,
-                    description: description,
-                    imageUrl: imageUrl || 'https://placehold.co/400x200/0f172a/FFF?text=Study+Room',
-                    link: {
-                        mobileWebUrl: linkUrl,
-                        webUrl: linkUrl,
-                    },
-                },
-                buttons: [{
-                    title: '웹으로 보기',
-                    link: {
-                        mobileWebUrl: linkUrl,
-                        webUrl: linkUrl,
-                    },
-                }],
-            });
-        }
-
-        // 메인 액션 버튼 (공유 또는 다운로드)
-        el('mainAction').addEventListener('click', () => {
-            // 사용자에게 공유 옵션을 선택하도록 모달 표시
-            showModal(
-                '무엇을 공유하시겠습니까?',
-                '공유 옵션',
-                () => { // 확인 버튼 클릭 시 (카드 공유)
-                    shareCard();
-                },
-                () => { // 취소 버튼 클릭 시 (지도 공유)
-                    shareMap();
-                },
-                true,
-                true // 취소 버튼을 활성화하여 지도 공유 옵션으로 사용
-            );
-            el('modal-confirm').textContent = '카드 공유';
-            el('modal-cancel').textContent = '지도 공유';
-            
-        });
-
-        // 카드 공유 함수
-        async function shareCard() {
-            const node = el('card');
-            const reservationTitle = el('branch').textContent + ' 스터디룸 예약';
+            const reservationTitle = el('branch').textContent + ' 스터디룸 예약 정보';
             const reservationDescription = 
                 `예약일자: ${el('date').textContent}\n` +
                 `예약인원: ${el('people').textContent}\n` +
                 `이용시간: ${el('time').textContent}\n` +
                 `주소: ${el('address').textContent}`;
-
-            // 네이티브 공유 API 시도 (iOS에서 잘 작동)
-            try {
-                if (navigator.share) {
-                    const canvas = await html2canvas(node, {
-                        scale: window.devicePixelRatio || 2,
-                        backgroundColor: '#0f1724',
-                        useCORS: true
-                    });
-                    const blob = await canvasToBlob(canvas);
-                    const file = new File([blob], 'reservation_card.png', { type: 'image/png' });
-
-                    if (navigator.canShare({ files: [file] })) {
-                        await navigator.share({
-                            files: [file],
-                            title: '스터디룸 예약 정보',
-                            text: reservationDescription,
-                        });
-                        showModal('네이티브 공유가 성공했습니다.', '알림');
-                        return;
-                    }
-                }
                 
-                // 네이티브 공유가 실패하면 카카오톡 공유 시도
-                shareToKakao(reservationTitle, reservationDescription, shareUrl, 'https://i.imgur.com/jv4B6zz.png');
-                showModal('네이티브 공유가 지원되지 않습니다. 카카오톡 공유를 시도합니다.', '알림');
-
-            } catch(err) {
-                if (err.name === 'AbortError') {
-                    console.log('공유 취소됨');
-                } else {
-                    console.error("공유 실패:", err);
-                    showModal('공유 기능이 지원되지 않습니다. 다운로드 기능을 이용해주세요.', '오류', () => downloadImage(document.getElementById('card')));
-                }
-            }
+            Kakao.Share.sendDefault({
+                objectType: 'feed',
+                content: {
+                    title: reservationTitle,
+                    description: reservationDescription,
+                    imageUrl: 'https://i.imgur.com/jv4B6zz.png',
+                    link: {
+                        mobileWebUrl: shareUrl,
+                        webUrl: shareUrl,
+                    },
+                },
+                buttons: [
+                    {
+                        title: '예약 확인하기',
+                        link: {
+                            mobileWebUrl: shareUrl,
+                            webUrl: shareUrl,
+                        },
+                    },
+                    {
+                        title: '지도 보기',
+                        link: {
+                            mobileWebUrl: mapUrl,
+                            webUrl: mapUrl,
+                        },
+                    },
+                ],
+            });
         }
 
-        // 지도 공유 함수
-        async function shareMap() {
-            const mapTitle = el('branch').textContent;
-            const mapDescription = '스터디룸 위치를 확인하세요.';
-
-            // 네이티브 공유 API 시도
-            try {
-                if (navigator.share) {
-                    await navigator.share({
-                        title: mapTitle,
-                        text: mapDescription,
-                        url: mapUrl
-                    });
-                    showModal('네이티브 공유가 성공했습니다.', '알림');
-                    return;
-                }
-                
-                // 네이티브 공유가 실패하면 카카오톡 공유 시도
-                shareToKakao(mapTitle, mapDescription, mapUrl, 'https://i.imgur.com/qA1T4cW.png'); // 지도용 이미지
-                showModal('네이티브 공유가 지원되지 않습니다. 카카오톡 공유를 시도합니다.', '알림');
-            } catch (err) {
-                if (err.name === 'AbortError') {
-                    console.log('공유 취소됨');
-                } else {
-                    console.error("지도 공유 실패:", err);
-                    showModal('지도 공유에 실패했습니다. 링크를 직접 복사해 주세요.', '오류');
-                }
-            }
-        }
+        // 메인 액션 버튼 (공유)
+        el('mainAction').addEventListener('click', () => {
+            shareToKakao();
+        });
 
         // 초기화
         el('resetBtn').addEventListener('click', () => {
