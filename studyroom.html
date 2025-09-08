@@ -189,9 +189,6 @@
         </div>
     </div>
 
-    <!-- 카카오 SDK -->
-    <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" xintegrity="sha384-kYkAGk5gK6R4t5k77L/g/38C1B/2/l4e/w4U3Q9x5d5j5x1N92qFzQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    
     <!-- html2canvas CDN for image export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" xintegrity="sha512-BNa5xNwqjQqjQq9gQjzG5aI2qfQv1Zs9+fGf6lK8a2e8u7Y6qg4x8v2g0kGm9E6v5ZzT3z9y6Qh2g7a1ZcYw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
@@ -271,101 +268,31 @@
         // 메인 액션 버튼 (공유 또는 다운로드)
         el('mainAction').addEventListener('click', async () => {
             const node = el('card');
-            const shareText = '스터디룸 예약 했습니다.';
-            const shareUrl = 'https://deeper1209.github.io/studyroom/map.html';
-
             try {
-                // 사용자 에이전트로 안드로이드 기기를 감지
-                const isAndroid = /Android/i.test(navigator.userAgent);
-                const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-                if (isAndroid) {
-                    // 안드로이드 기기일 경우 카카오 SDK를 사용
-                    // 카카오 SDK 초기화
-                    // TODO: 아래 YOUR_APP_KEY를 실제 카카오 SDK JavaScript 키로 바꿔주세요.
-                    Kakao.init('6b0e3d86b06c623bc15383b891a22ab7');
-                    
-                    const canvas = await html2canvas(node, { 
-                        scale: window.devicePixelRatio || 2, 
-                        backgroundColor: '#0f1724',
-                        useCORS: true
-                    });
+                const canvas = await html2canvas(node, { 
+                    scale: window.devicePixelRatio || 2, 
+                    backgroundColor: '#0f1724', // 배경색을 명확하게 지정
+                    // 외부 이미지를 처리하기 위한 옵션
+                    useCORS: true
+                });
+                
+                // Web Share API를 지원하는지 확인
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([await canvasToBlob(canvas)], 'reservation_card.png', { type: 'image/png' })] })) {
                     const blob = await canvasToBlob(canvas);
-
-                    // 이미지를 카카오 서버에 업로드하여 이미지 URL을 얻음
-                    const uploadedImage = await Kakao.Share.uploadImage({
-                        file: [blob]
-                    });
-
-                    // 카카오 공유 피드 템플릿으로 공유
-                    Kakao.Share.sendDefault({
-                        objectType: 'feed',
-                        content: {
-                            title: '스터디룸 예약 했습니다.',
-                            description: `[위치 확인하기]
-${el('branch').textContent}
-${el('address').textContent}
-${el('date').textContent}
-${el('time').textContent}`,
-                            imageUrl: uploadedImage.infos.original.url,
-                            link: {
-                                mobileWebUrl: shareUrl,
-                                webUrl: shareUrl,
-                            },
-                        },
-                        buttons: [
-                            {
-                                title: '위치 정보',
-                                link: {
-                                    mobileWebUrl: shareUrl,
-                                    webUrl: shareUrl,
-                                },
-                            },
-                        ],
+                    const file = new File([blob], 'reservation_card.png', { type: 'image/png' });
+                    await navigator.share({
+                        files: [file],
+                        title: '스터디룸 예약',
+                        text: '스터디룸 예약 했습니다.\n위치 확인하기: https://deeper1209.github.io/studyroom/map.html'
                     });
                     showModal('성공적으로 공유되었습니다.');
-                } else if (isIOS) {
-                    // 아이폰일 경우 기존 Web Share API 사용
-                    if (navigator.share) {
-                        const canvas = await html2canvas(node, { 
-                            scale: window.devicePixelRatio || 2, 
-                            backgroundColor: '#0f1724',
-                            useCORS: true
-                        });
-                        const blob = await canvasToBlob(canvas);
-                        const file = new File([blob], 'reservation_card.png', { type: 'image/png' });
-                        
-                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                            await navigator.share({
-                                files: [file],
-                                title: '스터디룸 예약',
-                                text: shareText + '\n위치 확인하기: ' + shareUrl,
-                            });
-                            showModal('성공적으로 공유되었습니다.');
-                        } else {
-                            await navigator.share({
-                                title: '스터디룸 예약',
-                                text: shareText,
-                                url: shareUrl
-                            });
-                            showModal('성공적으로 공유되었습니다.');
-                        }
-                    } else {
-                        throw new Error('Web Share API is not supported.');
-                    }
                 } else {
-                    // 그 외 기기에서 Web Share API가 지원되지 않는 경우
-                    const canvas = await html2canvas(node, { 
-                        scale: window.devicePixelRatio || 2, 
-                        backgroundColor: '#0f1724',
-                        useCORS: true
-                    });
+                    // Web Share API가 지원되지 않을 경우 다운로드 실행 및 안내
                     downloadImage(canvas);
                     showModal('공유에 실패했습니다. 다운로드 버튼을 눌러 저장해 보세요.', '알림');
                 }
             } catch(err) {
-                console.error(err);
-                showModal('작업에 실패했습니다. 오류: ' + err.message, '오류');
+                showModal('작업에 실패했습니다: ' + (err && err.message ? err.message : err));
             }
         });
 
