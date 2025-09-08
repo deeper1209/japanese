@@ -477,10 +477,10 @@ ${el('time').textContent}`,
                     const shareTextDetails = `스터디룸 예약 완료
 지점명: ${el('branch').textContent}
 주소: ${el('address').textContent}
+비고: ${el('note').textContent}
 예약일자: ${el('date').textContent}
 예약인원: ${el('people').textContent}
-이용시간: ${el('time').textContent}
-비고: ${el('note').textContent}`;
+이용시간: ${el('time').textContent}`;
                     
                     if (navigator.share) {
                         await navigator.share({
