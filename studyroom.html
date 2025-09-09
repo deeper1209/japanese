@@ -60,16 +60,29 @@
             background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--card);padding:10px 14px;border-radius:10px;font-size:14px;
             cursor:pointer;
         }
-        button.primary{background:linear-gradient(90deg,var(--accent),#7c3aed);border:none;box-shadow:0 8px 20px rgba(124,58,237,0.12)}
-        .note{font-size:12px;color:var(--muted);margin-top:8px}
-        /* iOS 사용자 버튼 전용 그라데이션 */
+        button.primary{
+            border:none;
+            box-shadow:0 8px 20px rgba(124,58,237,0.12);
+        }
+
+        /* 그라데이션 애니메이션 효과 */
         #iosShareAction {
-            background: linear-gradient(90deg, #84cc16, #22c55e);
+            background: linear-gradient(90deg, #84cc16, #22c55e, #1d4ed8, #2563eb, #3b82f6);
+            background-size: 200% 100%;
+            animation: flow-gradient 4s linear infinite alternate;
         }
-        /* Android 사용자 버튼 전용 그라데이션 */
+        /* 안드로이드 버튼에도 물 흐르듯 변하는 그라데이션 효과를 적용하고 색상 순서를 변경함 */
         #mainAction {
-            background: linear-gradient(135deg, #1d4ed8, #2563eb, #3b82f6);
+            background: linear-gradient(90deg, #3b82f6, #2563eb, #1d4ed8, #22c55e, #84cc16);
+            background-size: 200% 100%;
+            animation: flow-gradient 4s linear infinite alternate;
         }
+
+        @keyframes flow-gradient {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+        
         @media (max-width:520px){
             .right{width:100%}
         }
@@ -188,7 +201,7 @@
 <body>
     <div class="wrap">
         <div class="info-bar">
-            터치하여 수정하고 편집 후 사용자의 OS로 공유하세요.
+            수정하고 싶은 부분을 터치하고, 사용자의 OS로 공유하세요.
         </div>
         <div class="card" id="card">
             <div class="header">
@@ -269,7 +282,7 @@
             branch: '이룸 스터디룸 여의도점',
             address: '영등포구 여의대방로65길 10, 유니온타워',
             note: '2호점 - 4층 406호',
-            date: '9월 7일',
+            date: '9월 6일',
             people: '6명',
             time: '오전 9시30분~12시30분 (3시간)'
         };
